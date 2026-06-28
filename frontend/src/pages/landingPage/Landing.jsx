@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense, useMemo, useState, useCallback } from 'react'
+import React, { useRef, useEffect, Suspense, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
@@ -211,6 +211,12 @@ function Footer() {
   )
 }
 
+class ModelErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false } }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() { return this.state.hasError ? null : this.props.children }
+}
+
 export default function Landing() {
   const [bounds, setBounds] = useState(null)
 
@@ -228,9 +234,11 @@ export default function Landing() {
 
         <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
           <div className="relative" style={{ width: '70vw', height: '80vh', maxWidth: '950px', maxHeight: '750px' }}>
-            <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/60 border-t-transparent rounded-full animate-spin" /></div>}>
-              <Scene bounds={bounds} onBoundsReady={onBoundsReady} />
-            </Suspense>
+            <ModelErrorBoundary>
+              <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/60 border-t-transparent rounded-full animate-spin" /></div>}>
+                <Scene bounds={bounds} onBoundsReady={onBoundsReady} />
+              </Suspense>
+            </ModelErrorBoundary>
           </div>
         </div>
 
