@@ -231,12 +231,17 @@ function Atmosphere({ progress }) {
   )
 }
 
-function SceneImage({ src, progress, scene }) {
-  if (!scene) return null
+function SceneImage({ src, progress, scene, isBase }) {
+  if (!scene && !isBase) return null
+  if (isBase) {
+    return (
+      <div className="absolute inset-0 z-1">
+        <img src={src} alt="" className="w-full h-full object-cover" />
+      </div>
+    )
+  }
   const blend = getSceneBlend(progress, scene)
   const opacity = Math.min(blend * 2, 1) * (1 - Math.max(0, (progress - scene.end + 0.03) / 0.03))
-
-  const parallaxBase = scene.start * 100
   const parallaxOffset = (progress - scene.start) * 200
   const scale = 1 + (1 - scene.warmth) * 0.03
 
@@ -277,12 +282,13 @@ export default function HeroCinematic({ onComplete }) {
   const targetZoomRef = useRef(0)
   const [displayProgress, setDisplayProgress] = useState(0)
   const [showCTA, setShowCTA] = useState(false)
+  const [modelLoaded, setModelLoaded] = useState(false)
   const rafRef = useRef(null)
   const containerRef = useRef(null)
   const touchRef = useRef(null)
   const isLocked = useRef(true)
 
-  const onBoundsReady = useCallback((b) => setBounds(b), [])
+  const onBoundsReady = useCallback((b) => { setBounds(b); setModelLoaded(true) }, [])
 
   useEffect(() => {
     const updateZoom = () => {
@@ -385,18 +391,13 @@ export default function HeroCinematic({ onComplete }) {
     <section ref={containerRef} className="relative w-full overflow-hidden"
       style={{ height: '100vh', minHeight: '700px', background: '#1a1a2e', cursor: 'grab' }}>
 
-      {show3D && (
-        <div className="absolute inset-0 z-0">
-          <img
-            src={SCENE_IMAGES[0]}
-            alt=""
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.3, filter: 'blur(4px) brightness(0.5)' }}
-          />
-        </div>
-      )}
+      <SceneImage src={SCENE_IMAGES[0]} isBase={true} />
 
-      <div className="absolute inset-0 z-5" style={{ opacity: show3D ? 1 : 0, transition: 'opacity 0.8s ease' }}>
+      <div className="absolute inset-0 z-5" style={{
+        opacity: show3D ? 1 : 0,
+        transition: 'opacity 1s ease',
+        pointerEvents: show3D ? 'auto' : 'none',
+      }}>
         <ModelScene bounds={bounds} onBoundsReady={onBoundsReady} zoomProgress={zoomRef} />
       </div>
 
