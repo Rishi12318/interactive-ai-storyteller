@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const BG_IMAGE = 'https://i.pinimg.com/736x/f3/e5/8c/f3e58c770155cc14bd469a7c3f03546f.jpg'
+const BOOK_IMAGE = 'https://i.pinimg.com/736x/f3/e5/8c/f3e58c770155cc14bd469a7c3f03546f.jpg'
+const STATUE_IMAGE = 'https://i.pinimg.com/736x/c1/ad/22/c1ad22bda2188ac61f0633bcbb2baaef.jpg'
 
 const LEAF_COLORS = ['#d4a017', '#c8962e', '#b8860b', '#daa520', '#ffd700', '#6B8E23', '#8B7355', '#A0822A', '#556B2F', '#8B4513']
 
@@ -106,16 +108,39 @@ function Footer() {
 }
 
 export default function Landing() {
+  const [phase, setPhase] = useState('book')
+
+  const handleClick = () => {
+    if (phase === 'book') {
+      setPhase('statue')
+    }
+  }
+
   return (
     <>
-      <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '900px', background: '#f0e6d3' }}>
-        <div className="absolute inset-0" style={{ animation: 'heroZoom 30s ease-in-out infinite alternate' }}>
-          <img src={BG_IMAGE} alt="" className="w-full h-full object-cover" aria-hidden="true" />
+      <section onClick={handleClick} className="relative w-full overflow-hidden cursor-pointer" style={{ height: '100vh', minHeight: '900px', background: '#f0e6d3' }}>
+        <div className="absolute inset-0" style={{
+          animation: phase === 'book' ? 'heroZoom 30s ease-in-out infinite alternate' : 'none',
+          transform: phase === 'statue' ? 'scale(1.12)' : undefined,
+          opacity: phase === 'book' ? 1 : 0,
+          transition: 'opacity 1.5s ease-in-out',
+          pointerEvents: 'none',
+        }}>
+          <img src={BOOK_IMAGE} alt="" className="w-full h-full object-cover" aria-hidden="true" />
+        </div>
+
+        <div className="absolute inset-0" style={{
+          animation: phase === 'statue' ? 'heroZoom 30s ease-in-out infinite alternate' : 'none',
+          opacity: phase === 'statue' ? 1 : 0,
+          transition: 'opacity 1.5s ease-in-out',
+          pointerEvents: 'none',
+        }}>
+          <img src={STATUE_IMAGE} alt="" className="w-full h-full object-cover" aria-hidden="true" />
         </div>
 
         <div className="absolute inset-0" style={{
           background: 'radial-gradient(ellipse at 50% 40%, rgba(255,200,100,0.15) 0%, transparent 50%)',
-          zIndex: 1,
+          zIndex: 1, pointerEvents: 'none',
         }} />
 
         <Particles />
