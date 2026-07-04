@@ -13,12 +13,12 @@ const SCENE_IMAGES = [
 ]
 
 const SCENES = [
-  { id: 'stairs', start: 0.15, end: 0.33, idx: 0, fog: 'rgba(60,90,40,0.15)', warmth: 0.9 },
-  { id: 'palace', start: 0.33, end: 0.50, idx: 1, fog: 'rgba(80,70,50,0.10)', warmth: 1.0 },
-  { id: 'mystery', start: 0.50, end: 0.65, idx: 2, fog: 'rgba(30,40,60,0.20)', warmth: 0.5 },
-  { id: 'horror', start: 0.65, end: 0.78, idx: 3, fog: 'rgba(10,10,15,0.35)', warmth: 0.2 },
-  { id: 'wedding', start: 0.78, end: 0.90, idx: 4, fog: 'rgba(90,60,30,0.12)', warmth: 1.0 },
-  { id: 'library', start: 0.90, end: 1.0, idx: 5, fog: 'rgba(40,30,20,0.18)', warmth: 0.6 },
+  { id: 'stairs', start: 0.15, end: 0.33, idx: 0, bg: '#d4c9b8' },
+  { id: 'palace', start: 0.33, end: 0.50, idx: 1, bg: '#d4c4b0' },
+  { id: 'mystery', start: 0.50, end: 0.65, idx: 2, bg: '#c4b8c8' },
+  { id: 'horror', start: 0.65, end: 0.78, idx: 3, bg: '#a898a0' },
+  { id: 'wedding', start: 0.78, end: 0.90, idx: 4, bg: '#e0c8b8' },
+  { id: 'library', start: 0.90, end: 1.0, idx: 5, bg: '#c8b8a8' },
 ]
 
 function getActiveScene(progress) {
@@ -39,37 +39,27 @@ function getBlend(progress, scene) {
 function SceneLayer({ src, progress, scene }) {
   if (!scene) return null
   const blend = getBlend(progress, scene)
-  const fadeIn = Math.min(blend * 3, 1)
-  const fadeOut = 1 - Math.max(0, (progress - scene.end + 0.04) / 0.04)
+
+  const fadeIn = Math.min(blend * 2.5, 1)
+  const fadeOut = 1 - Math.max(0, (progress - scene.end + 0.05) / 0.05)
   const opacity = Math.max(0, Math.min(fadeIn, fadeOut))
 
+  const zoom = 1 + blend * 0.06
+
   return (
-    <div className="absolute inset-0" style={{
+    <div className="absolute inset-0 flex items-center justify-center" style={{
       opacity,
-      transition: 'opacity 0.15s linear',
+      transition: 'opacity 0.1s linear',
       pointerEvents: 'none',
+      background: scene.bg,
     }}>
-      <img src={src} alt="" className="w-full h-full object-cover" />
+      <img src={src} alt="" className="max-w-full max-h-full" style={{
+        transform: `scale(${zoom})`,
+        transition: 'transform 0.1s linear',
+        objectFit: 'contain',
+        filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.15))',
+      }} />
     </div>
-  )
-}
-
-function Atmosphere({ progress }) {
-  const scene = getActiveScene(progress)
-  const fogOpacity = scene ? Math.min(getBlend(progress, scene) * 0.6 + 0.1, 0.5) : 0
-  const vignette = Math.min(progress * 0.5, 0.4)
-
-  return (
-    <>
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: scene ? scene.fog : 'transparent',
-        opacity: fogOpacity,
-        transition: 'background 0.3s',
-      }} />
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: `radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,${vignette}) 100%)`,
-      }} />
-    </>
   )
 }
 
@@ -86,7 +76,7 @@ export default function HeroCinematic() {
 
   useEffect(() => {
     const tick = () => {
-      progressRef.current += (targetRef.current - progressRef.current) * 0.1
+      progressRef.current += (targetRef.current - progressRef.current) * 0.08
       if (Math.abs(progressRef.current - targetRef.current) < 0.001) {
         progressRef.current = targetRef.current
       }
@@ -155,65 +145,65 @@ export default function HeroCinematic() {
     }
   }, [showCTA])
 
+  const activeScene = getActiveScene(display)
+  const sceneBg = activeScene ? activeScene.bg : '#e8ddd0'
   const bookOpacity = Math.max(0, 1 - display * 8)
-  const showHint = display < 0.05
 
   return (
     <section ref={containerRef} className="relative w-full overflow-hidden"
-      style={{ height: '100vh', minHeight: '700px', background: '#1a1a2e', cursor: 'grab' }}>
+      style={{ height: '100vh', minHeight: '700px', background: sceneBg, cursor: 'grab', transition: 'background 0.4s ease' }}>
 
-      <div className="absolute inset-0" style={{ opacity: bookOpacity, transition: 'opacity 0.3s linear' }}>
-        <img src={BOOK_IMAGE} alt="" className="w-full h-full object-cover" />
+      <div className="absolute inset-0 flex items-center justify-center" style={{
+        background: '#e8ddd0',
+        opacity: bookOpacity,
+        transition: 'opacity 0.3s linear',
+      }}>
+        <img src={BOOK_IMAGE} alt="" className="max-w-full max-h-full" style={{
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.12))',
+        }} />
       </div>
 
       {SCENES.map((s) => (
         <SceneLayer key={s.id} src={SCENE_IMAGES[s.idx]} progress={display} scene={s} />
       ))}
 
-      <Atmosphere progress={display} />
-
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4"
         style={{ opacity: display > 0 ? 0.6 : 0, transition: 'opacity 0.5s' }}>
         <button onClick={() => { targetRef.current = Math.max(targetRef.current - 0.05, 0) }}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-lg text-white/80 hover:text-white hover:bg-white/10 transition-all"
-          style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(4px)' }} aria-label="Zoom out">−</button>
-        <div className="w-32 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
-          <div className="h-full rounded-full" style={{ width: `${display * 100}%`, background: 'linear-gradient(90deg, #d4a017, #ffd700)', transition: 'width 0.1s' }} />
+          className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all"
+          style={{ background: 'rgba(200,180,160,0.3)', color: '#7a6a5a', backdropFilter: 'blur(4px)' }} aria-label="Zoom out">−</button>
+        <div className="w-32 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(200,180,160,0.3)' }}>
+          <div className="h-full rounded-full" style={{ width: `${display * 100}%`, background: 'linear-gradient(90deg, #c4a882, #d4b896)', transition: 'width 0.1s' }} />
         </div>
         <button onClick={() => { targetRef.current = Math.min(targetRef.current + 0.05, 1) }}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-lg text-white/80 hover:text-white hover:bg-white/10 transition-all"
-          style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(4px)' }} aria-label="Zoom in">+</button>
+          className="w-10 h-10 rounded-full flex items-center justify-center text-lg transition-all"
+          style={{ background: 'rgba(200,180,160,0.3)', color: '#7a6a5a', backdropFilter: 'blur(4px)' }} aria-label="Zoom in">+</button>
       </div>
 
-      {showHint && (
+      {display < 0.02 && (
         <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 text-center">
-          <p className="text-white/70 text-sm tracking-widest uppercase" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-            Scroll forward to explore
+          <p className="text-sm tracking-widest uppercase" style={{ color: '#8a7a6a' }}>
+            Scroll forward
           </p>
         </div>
       )}
 
       {showCTA && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ animation: 'ctaIn 1.5s ease forwards' }}>
+        <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ animation: 'ctaIn 1.5s ease forwards', background: 'rgba(232,221,208,0.85)' }}>
           <div className="text-center px-6">
-            <h2 className="text-4xl md:text-5xl font-serif mb-4" style={{
-              color: '#f5e0b5',
-              textShadow: '0 4px 20px rgba(0,0,0,0.6)',
-            }}>
+            <h2 className="text-4xl md:text-5xl font-serif mb-4" style={{ color: '#6a5a4a' }}>
               Your Story Awaits
             </h2>
-            <p className="text-lg mb-8 max-w-md mx-auto" style={{
-              color: 'rgba(245,224,181,0.7)',
-              textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-            }}>
+            <p className="text-lg mb-8 max-w-md mx-auto" style={{ color: '#8a7a6a' }}>
               Step into a world of magic, mystery, and endless possibilities.
             </p>
             <button onClick={() => navigate('/signin')}
               className="px-10 py-4 rounded-lg text-lg font-medium tracking-wide transition-all duration-500 hover:scale-105"
               style={{
-                background: 'linear-gradient(135deg, #d4a017, #ffd700)',
-                color: '#1a1a2e',
-                boxShadow: '0 4px 20px rgba(212,160,23,0.3)',
+                background: 'linear-gradient(135deg, #d4c0a8, #c4b098)',
+                color: '#5a4a3a',
+                boxShadow: '0 4px 16px rgba(180,160,140,0.3)',
               }}>
               Begin Your Journey
             </button>
@@ -221,12 +211,7 @@ export default function HeroCinematic() {
         </div>
       )}
 
-      <style>{`
-        @keyframes ctaIn {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+      <style>{`@keyframes ctaIn{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}`}</style>
     </section>
   )
 }
