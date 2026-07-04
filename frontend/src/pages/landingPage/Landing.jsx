@@ -1,110 +1,6 @@
-import React, { useRef, useEffect, Suspense, useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Canvas, useLoader, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { TextureLoader } from 'three'
-import * as THREE from 'three'
 
 const BG_IMAGE = '/vintage-collage-frame-wallpaper-background-illustration-vector-paper-texture-with-design-space_53876-140661.avif'
-
-function GroundShadow({ radius }) {
-  const canvas = useMemo(() => {
-    const c = document.createElement('canvas')
-    c.width = 128; c.height = 128
-    const ctx = c.getContext('2d')
-    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-    g.addColorStop(0, 'rgba(0,0,0,0.18)')
-    g.addColorStop(0.4, 'rgba(0,0,0,0.10)')
-    g.addColorStop(0.7, 'rgba(0,0,0,0.04)')
-    g.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128)
-    return c
-  }, [])
-  const s = radius ? radius * 0.8 : 1.5
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -(radius ? radius * 0.45 : 1.8), 0]}>
-      <planeGeometry args={[s * 2.5, s * 1.8]} />
-      <meshBasicMaterial transparent opacity={0.85} map={new THREE.CanvasTexture(canvas)} depthWrite={false} />
-    </mesh>
-  )
-}
-
-function Model({ onBoundsReady }) {
-  const obj = useLoader(OBJLoader, '/model/model.obj')
-  const texture = useLoader(TextureLoader, '/model/diffuse_0.png')
-  const groupRef = useRef()
-  const applied = useRef(false)
-
-  useEffect(() => {
-    if (obj && texture && !applied.current) {
-      texture.colorSpace = THREE.SRGBColorSpace
-      const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.25, metalness: 0.05 })
-      obj.traverse((child) => {
-        if (child.isMesh) { child.material = material; child.castShadow = true; child.receiveShadow = true }
-      })
-      obj.updateMatrixWorld(true)
-
-      const box = new THREE.Box3().setFromObject(obj)
-      const center = box.getCenter(new THREE.Vector3())
-      const size = box.getSize(new THREE.Vector3())
-      const sphere = box.getBoundingSphere(new THREE.Sphere())
-
-      obj.position.sub(center)
-      applied.current = true
-      if (onBoundsReady) onBoundsReady({ radius: sphere.radius, height: size.y })
-    }
-  }, [obj, texture, onBoundsReady])
-
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      const t = clock.getElapsedTime()
-      groupRef.current.position.y = Math.sin(t * Math.PI / 3) * 0.02
-    }
-  })
-
-  return <group ref={groupRef}><primitive object={obj} /></group>
-}
-
-function CameraController({ bounds }) {
-  const { camera } = useThree()
-
-  useEffect(() => {
-    if (!bounds) return
-    const fovRad = camera.fov * Math.PI / 180
-    const fill = window.innerWidth < 768 ? 5.79 : window.innerWidth < 1024 ? 7.09 : 8.14
-    const dist = bounds.height / (fill * 2 * Math.tan(fovRad / 2))
-    camera.position.set(0, bounds.height * 0.08, dist)
-    camera.lookAt(0, -bounds.height * 0.12, 0)
-  }, [bounds, camera])
-
-  const az = 60 * Math.PI / 180
-  return (
-    <OrbitControls enableZoom={true} enablePan={false}
-      minPolarAngle={Math.PI / 2} maxPolarAngle={Math.PI / 2}
-      minAzimuthAngle={-az} maxAzimuthAngle={az}
-      rotateSpeed={0.8} dampingFactor={0.08} enableDamping={true}
-      minDistance={0.3} maxDistance={20} />
-  )
-}
-
-function Scene({ bounds, onBoundsReady }) {
-  return (
-    <Canvas style={{ width: '100%', height: '100%', background: 'transparent' }} gl={{ alpha: true }}
-      onCreated={({ gl, scene }) => { gl.setClearColor(0x000000, 0); scene.background = null }}>
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 4, 5]} intensity={2.2} color="#ffd700" />
-      <directionalLight position={[-3, 2, 3]} intensity={1.0} color="#87CEEB" />
-      <directionalLight position={[-3, 4, -2]} intensity={1.0} color="#ffe4b5" />
-      <hemisphereLight args={['#ffe4b5', '#3e2723', 0.3]} />
-      <Suspense fallback={null}>
-        <Model onBoundsReady={onBoundsReady} />
-        <GroundShadow radius={bounds?.radius} />
-      </Suspense>
-      <CameraController bounds={bounds} />
-    </Canvas>
-  )
-}
 
 const LEAF_COLORS = ['#d4a017', '#c8962e', '#b8860b', '#daa520', '#ffd700', '#6B8E23', '#8B7355', '#A0822A', '#556B2F', '#8B4513']
 
@@ -143,8 +39,6 @@ function Particles() {
     </div>
   )
 }
-
-
 
 const STORIES = [
   { title: 'Fairy Tale', image: '/FairyTale_Story.jpg', emoji: '✨' },
@@ -211,17 +105,7 @@ function Footer() {
   )
 }
 
-class ModelErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false } }
-  static getDerivedStateFromError() { return { hasError: true } }
-  render() { return this.state.hasError ? null : this.props.children }
-}
-
 export default function Landing() {
-  const [bounds, setBounds] = useState(null)
-
-  const onBoundsReady = useCallback((b) => setBounds(b), [])
-
   return (
     <>
       <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '900px' }}>
@@ -231,16 +115,6 @@ export default function Landing() {
           background: 'radial-gradient(ellipse at 50% 40%, rgba(255,200,100,0.15) 0%, transparent 50%)',
           zIndex: 1,
         }} />
-
-        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
-          <div className="relative" style={{ width: '70vw', height: '80vh', maxWidth: '950px', maxHeight: '750px' }}>
-            <ModelErrorBoundary>
-              <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/60 border-t-transparent rounded-full animate-spin" /></div>}>
-                <Scene bounds={bounds} onBoundsReady={onBoundsReady} />
-              </Suspense>
-            </ModelErrorBoundary>
-          </div>
-        </div>
 
         <Particles />
 
