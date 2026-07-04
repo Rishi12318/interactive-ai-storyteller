@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 
-const BG_IMAGE = '/vintage-collage-frame-wallpaper-background-illustration-vector-paper-texture-with-design-space_53876-140661.avif'
+const BG_IMAGE = 'https://i.pinimg.com/736x/f3/e5/8c/f3e58c770155cc14bd469a7c3f03546f.jpg'
 
 const LEAF_COLORS = ['#d4a017', '#c8962e', '#b8860b', '#daa520', '#ffd700', '#6B8E23', '#8B7355', '#A0822A', '#556B2F', '#8B4513']
 
@@ -108,8 +108,10 @@ function Footer() {
 export default function Landing() {
   return (
     <>
-      <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '900px' }}>
-        <img src={BG_IMAGE} alt="" className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+      <section className="relative w-full overflow-hidden" style={{ height: '100vh', minHeight: '900px', background: '#f0e6d3' }}>
+        <div className="absolute inset-0" style={{ animation: 'heroZoom 30s ease-in-out infinite alternate' }}>
+          <img src={BG_IMAGE} alt="" className="w-full h-full object-cover" aria-hidden="true" />
+        </div>
 
         <div className="absolute inset-0" style={{
           background: 'radial-gradient(ellipse at 50% 40%, rgba(255,200,100,0.15) 0%, transparent 50%)',
@@ -119,6 +121,10 @@ export default function Landing() {
         <Particles />
 
         <style>{`
+          @keyframes heroZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.12); }
+          }
           @keyframes leafFall {
             0% { transform: translateY(-8vh) translateX(0) rotate(var(--rotation)); opacity: 0; }
             10% { opacity: 0.6; }
