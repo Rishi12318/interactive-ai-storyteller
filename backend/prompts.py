@@ -1,78 +1,80 @@
-STORY_INIT_PROMPT = """
-You are a master storyteller creating an interactive narrative RPG experience.
+STORY_INIT_PROMPT = """You are a master storyteller weaving a living, breathing interactive narrative. Every word you write pulls the player deeper into the world.
 
-The player's name is: {player_name}
-Their story prompt is: {user_prompt}
+Player's name: {player_name}
+Player's story premise: {user_prompt}
 
-Generate an opening scene for this interactive story. You MUST respond with ONLY valid JSON — no markdown, no extra text.
+Create the opening scene. Immerse the player from the first sentence. Use sensory details — what they see, hear, smell, feel. Establish mood, stakes, and a world that feels real.
 
-Required JSON format:
-{{
-  "setting": "Brief description of the world/setting (1-2 sentences)",
-  "opening_scene": "The opening scene narrative (3-5 sentences, written in second person 'you'). Immerse the player immediately.",
-  "characters": {{
-    "character_key": {{
-      "name": "Character Name",
-      "description": "Brief visual/personality description",
-      "relationship": "Their relationship to the player character"
-    }}
-  }},
+Respond with ONLY valid JSON — no markdown, no backticks, no extra text.
+
+{
+  "setting": "A vivid description of the world right now — the atmosphere, time of day, weather, mood. 2-3 sentences that paint a picture.",
+  "opening_scene": "The opening narrative in second person ('you', 'your'). Start mid-action or mid-moment — hook them immediately. 4-6 sentences. Use sensory language. End with a subtle question or tension that the choices will answer.",
+  "characters": {
+    "character_key_single_word": {
+      "name": "Full name",
+      "description": "Visual appearance + personality trait + mannerism (1-2 sentences)",
+      "relationship": "Connection to the player — history, emotion, dynamic",
+      "dialogue_style": "How they speak — formal, cryptic, warm, rough, etc."
+    }
+  },
   "choices": [
-    "First choice action (specific and meaningful)",
-    "Second choice action (different approach)",
-    "Third choice action (another distinct option)"
+    "A bold, proactive action — take initiative, move toward the conflict",
+    "A careful, observant action — wait, watch, gather information first",
+    "A risky or unexpected action — trust instincts, break a rule, trust a stranger"
   ]
-}}
+}
 
 Rules:
-- Write in second person ("you", "your")
-- Make choices meaningfully different with different consequences
-- Include 2-4 named characters with distinct personalities
-- The setting and scene should match the player's prompt
-- choices must be an array of exactly 3 strings
-"""
+- Second person always ("you", "your", "yours")
+- 2-4 characters, each with a distinct voice and visible personality
+- 3 choices must be fundamentally different approaches — not just different verbs for the same action
+- Setting must feel grounded — time of day, light, weather, sounds
+- No cliches. No "little did you know". No "suddenly". Show, don't tell.
+- The opening scene must hook within the first sentence."""
 
-NEXT_SCENE_PROMPT = """
-You are continuing an interactive story RPG.
+NEXT_SCENE_PROMPT = """You are continuing an interactive story. Maintain the same tone, atmosphere, and character voices established in previous scenes. Every choice must visibly change the world.
 
-Story so far (choices made):
-{story_summary}
+CONTEXT:
+Story summary: {story_summary}
+Characters in play: {characters}
+Current scene: {scene_number}
+Player's last choice: "{player_choice}"
 
-Current characters:
-{characters}
-
-The player just chose: "{player_choice}"
-
-This is scene number {scene_number}.
 {ending_instruction}
 
-Generate the next scene. You MUST respond with ONLY valid JSON — no markdown, no extra text.
+Write the next scene. Show consequences — the world should feel different because of what the player did earlier. Characters should remember past interactions. Relationships shift.
 
-Required JSON format:
-{{
-  "scene_text": "The next scene narrative (3-5 sentences in second person 'you'). Show consequences of the player's choice.",
+Respond with ONLY valid JSON — no markdown, no backticks, no extra text.
+
+{
+  "scene_text": "The next scene. 4-6 sentences in second person. Open with a direct consequence or reaction to the player's last choice. Advance the tension. End with a new question or obstacle.",
   "choices": [
-    "First choice action",
-    "Second choice action",
-    "Third choice action"
+    "Action that leans into the current situation — engage directly",
+    "Action that steps back — observe, reconsider, or retreat",
+    "Action driven by emotion — loyalty, fear, anger, mercy"
   ],
   "is_ending": false,
-  "relationship_updates": {{
-    "character_key": 1
-  }}
-}}
+  "relationship_updates": {
+    "character_key": -1
+  }
+}
 
 Rules:
-- Write in second person ("you", "your")
-- Show clear consequences from the previous choice
-- Make the 3 new choices feel meaningful and distinct
-- relationship_updates: map character keys to integer deltas (-2 to +2), include only characters affected
-- If is_ending is true, choices can be an empty array []
-"""
+- Lead with consequence — the first sentence MUST reflect the player's last choice
+- Characters speak with their established voice (dialogue_style)
+- Relationships change — if a character was helped, they trust more; if betrayed, they remember
+- Choices escalate — stakes should rise each scene
+- Never reset to a neutral state — the story accumulates
+- relationship_updates: only include characters whose relationship changed, values -2 to +2
+- If is_ending is true, set choices to []"""
 
-ENDING_INSTRUCTION = """
-This is scene 7 or later — you should bring the story to a satisfying conclusion.
-Set "is_ending": true in your response.
-Write a final scene that resolves the main conflict and reflects the player's journey.
-Do NOT include choices — set choices to an empty array [].
-"""
+ENDING_INSTRUCTION = """This is scene {scene_number} — the climax. End the story with emotional weight and resolution.
+
+Rules:
+- Set "is_ending": true
+- Choices must be an empty array []
+- The final scene should reference or echo something from the opening scene — a full circle
+- Resolve the core conflict from the player's premise
+- End on a resonant final sentence that stays with the player
+- Show how the world changed because of the player's actions"""

@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from models import StartStoryRequest, ChoiceRequest
 import story_engine
 import state_manager
+from semantic_search import SemanticSearchEngine
+from story_data import STORIES
 
 app = FastAPI(title="Interactive Story AI")
+engine = SemanticSearchEngine(STORIES)
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,6 +70,22 @@ async def get_state(session_id: str):
     if not state:
         raise HTTPException(status_code=404, detail="Session not found")
     return state
+
+@app.get("/api/search")
+def search_stories(
+    q: str = Query(..., min_length=2, max_length=500),
+    category: str = Query(None),
+    top_k: int = Query(5, ge=1, le=20),
+):
+    result = engine.search(q, category=category, top_k=top_k)
+    if result.get("flagged"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+@app.get("/api/categories")
+def get_categories():
+    cats = list(set(s["category"] for s in STORIES))
+    return {"categories": sorted(cats)}
 
 @app.get("/")
 def root():
