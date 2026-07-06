@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../src/config";
 
-const BASE_URL = "https://interactive-ai-storyteller-xofi.onrender.com";
+const BASE_URL = API_BASE_URL;
 
 export async function startStory(prompt, playerName, characterProfile = null) {
   const response = await axios.post(`${BASE_URL}/start-story`, {
